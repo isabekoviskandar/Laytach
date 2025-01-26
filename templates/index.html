@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тренды и Рекомендации</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { width: 80%; margin: 0 auto; }
+        .form-group { margin-bottom: 10px; }
+        .btn { padding: 10px 20px; background-color: #007BFF; color: white; border: none; cursor: pointer; }
+        .btn:hover { background-color: #0056b3; }
+        #results { margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Анализ трендов и рекомендации товаров</h1>
+        <form id="trendsForm">
+            <div class="form-group">
+                <label for="keywords">Введите ключевые слова (через запятую):</label>
+                <input type="text" id="keywords" name="keywords" class="form-control" placeholder="например, умные часы, наушники Bluetooth">
+            </div>
+            <div class="form-group">
+                <label for="geo">Выберите регион:</label>
+                <select id="geo" name="geo" class="form-control">
+                    <option value="UZ">Узбекистан</option>
+                    <option value="KZ">Казахстан</option>
+                    <option value="TJ">Таджикистан</option>
+                </select>
+            </div>
+            <button type="submit" class="btn">Получить тренды и рекомендации</button>
+        </form>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        document.getElementById('trendsForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+
+            let keywords = document.getElementById('keywords').value;
+            let geo = document.getElementById('geo').value;
+
+            fetch('/get_trends', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'keywords=' + encodeURIComponent(keywords) + '&geo=' + geo
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);  // Логируем ответ для отладки
+
+                let trends = data.trends;
+                let products = data.products;
+
+                let resultHTML = "<h3>Тренды за последнюю неделю:</h3><ul>";
+                if (trends.length > 0) {
+                    trends.forEach(trend => {
+                        for (let keyword in trend) {
+                            if (keyword !== 'date') {
+                                resultHTML += `<li><b>${keyword}:</b> ${trend[keyword]}</li>`;
+                            }
+                        }
+                    });
+                } else {
+                    resultHTML += "<li>Нет данных по трендам для выбранных ключевых слов.</li>";
+                }
+                resultHTML += "</ul>";
+
+                resultHTML += "<h3>Рекомендованные товары:</h3><ul>";
+                if (products.length > 0) {
+                    products.forEach(product => {
+                        resultHTML += `<li>${product}</li>`;
+                    });
+                } else {
+                    resultHTML += "<li>Нет рекомендованных товаров для этих ключевых слов.</li>";
+                }
+                resultHTML += "</ul>";
+
+                document.getElementById('results').innerHTML = resultHTML;
+            });
+        });
+    </script>
+</body>
+</html>
